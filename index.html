@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wobbly Life Tutorials - Kosmos</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle at center, #1b1b3a 0%, #090912 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Efekt gwiazd w tle */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(white 1px, transparent 0),
+                radial-gradient(rgba(255,255,255,0.5) 1px, transparent 0);
+            background-size: 50px 50px, 30px 30px;
+            background-position: 0 0, 15px 15px;
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        /* Górny pasek nawigacyjny */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(15, 15, 30, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            cursor: pointer;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+        }
+
+        nav a {
+            color: #ccc;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        nav a:hover, nav a.active {
+            color: #fff;
+            background: rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+        }
+
+        /* Główny kontener / Strona główna */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 80px);
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 4rem;
+            letter-spacing: 4px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #9900ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            margin-bottom: 20px;
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: #a0a0c0;
+            max-width: 600px;
+        }
+
+        /* Sekcje podstron */
+        .content-section {
+            display: none;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+            background: rgba(20, 20, 40, 0.6);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        h2 {
+            color: #00ffff;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #ff00ff;
+            margin: 20px 0 10px 0;
+            font-size: 1.3rem;
+        }
+
+        /* Przycisk wstecz (strzałka) */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        /* Panel suwaka liczby graczy */
+        .players-control {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .players-control label {
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        .players-control input[type="range"] {
+            cursor: pointer;
+            accent-color: #ff00ff;
+            width: 150px;
+        }
+
+        /* Styl wysp i zwierzaków */
+        .islands-list {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .island-btn {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .island-btn:hover, .island-btn.active {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        .animals-container {
+            display: none;
+        }
+
+        .animals-container.active {
+            display: block;
+        }
+
+        .animals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .animal-card, .job-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .animal-card:hover, .job-card:hover {
+            border-color: #ff00ff;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .jobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Styl widoku detali (zwierzaka / pracy) */
+        .detail-box {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        @media (min-width: 650px) {
+            .detail-box {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+
+        .image-container {
+            width: 100%;
+            max-width: 300px;
+            height: 200px;
+            border-radius: 10px;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 15px rgba(0,255,255,0.3);
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            text-align: center;
+            color: #aaa;
+            font-style: italic;
+            flex-shrink: 0;
+        }
+
+        .detail-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .detail-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .detail-info p {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: #d0d0e0;
+        }
+
+        .detail-info span {
+            color: #00ffff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Górne menu -->
+    <header>
+        <div class="logo" onclick="showSection('home')">WOBBLY LIFE</div>
+        <nav>
+            <ul>
+                <li><a onclick="showSection('home')">Start</a></li>
+                <li><a id="tab-zwierzaki" class="nav-tab" onclick="showSection('zwierzaki')">Zwierzaki</a></li>
+                <li><a id="tab-prace" class="nav-tab" onclick="showSection('prace')">Prace</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Strona Główna -->
+    <div id="home" class="main-container content-section active" style="border:none; background:none; box-shadow:none; margin:0 auto; display:flex;">
+        <h1>WOBBLY LIFE TUTORIALS</h1>
+        <p class="subtitle">Wkrocz w kosmiczny wymiar poradników i odkrywaj sekrety gry!</p>
+    </div>
+
+    <!-- Sekcja Prace (Lista) -->
+    <div id="prace" class="content-section">
+        <h2>Lista Zawodów w Wobbly Life</h2>
+        
+        <!-- Suwak liczby graczy -->
+        <div class="players-control">
+            <label for="playersRange">Liczba graczy: <span id="playersCount" style="color:#ff00ff; font-size: 1.2rem;">1</span></label>
+            <div>
+                <span>1</span>
+                <input type="range" id="playersRange" min="1" max="4" value="1" oninput="updatePlayers(this.value)">
+                <span>4</span>
+            </div>
+        </div>
+
+        <h3>Prace Ziemskie / Główne</h3>
+        <div class="jobs-grid" id="earthJobsList"></div>
+
+        <h3>Prace Kosmiczne</h3>
+        <div class="jobs-grid" id="spaceJobsList"></div>
+    </div>
+
+    <!-- Sekcja Detaliczna Pracy -->
+    <div id="detale-pracy" class="content-section">
+        <button class="back-btn" onclick="showSection('prace')">← Wróć do prac</button>
+        <h2 id="praca-detal-nazwa">Nazwa Pracy</h2>
+        <div class="detail-box">
+            <div id="praca-detal-zdjecie-wrapper" class="image-container">
+                <!-- Zdjęcie pracy -->
+            </div>
+            <div class="detail-info">
+                <p><span>Opis:</span> <span id="praca-detal-opis" style="color:#ccc;"></span></p>
+                <p><span>Osiągnięcia:</span> <span id="praca-detal-osiagniecia" style="color:#ffcc00;"></span></p>
+                <p><span>Pieniądze:</span> <span id="praca-detal-pieniadze" style="color:#28a745; font-weight:bold;"></span></p>
+                <p><span>Lokalizacja:</span> <span id="praca-detal-lokalizacja" style="color:#fff;"></span></p>
+                <p><span>Maksymalny czas:</span> <span id="praca-detal-czas" style="color:#ff00ff;"></span></p>
+                <p><span>Strój:</span> <span id="praca-detal-stroj" style="color:#00ffff;"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sekcja Zwierzaki (Lista) -->
+    <div id="zwierzaki" class="content-section">
+        <h2>Wybierz Wyspę</h2>
+        <div class="islands-list">
+            <button id="btn-farma" class="island-btn active" onclick="showIsland('farma')">Farma</button>
+            <button id="btn-rajska" class="island-btn" onclick="showIsland('rajska')">Rajska Wyspa</button>
+            <button id="btn-kosmos" class="island-btn" onclick="showIsland('kosmos')">Kosmos</button>
+        </div>
+
+        <!-- Wyspa Farma -->
+        <div id="farma" class="animals-container active">
+            <h3 style="color: #ff00ff; margin-bottom: 15px;">Zwierzęta na wyspie: Farma</h3>
+            <div class="animals-grid" id="farmaList"></div>
+        </div>
+
+        <!-- Rajska Wyspa -->
+        <div id="rajska" class="animals-container">
+            <h3 style="color: #ff00ff; margin-bottom: 15px;">Zwierzęta na wyspie: Rajska Wyspa</h3>
+            <div class="animals-grid" id="rajskaList"></div>
+        </div>
+
+        <!-- Wyspa Kosmos -->
+        <div id="kosmos" class="animals-container">
+            <h3 style="color: #ff00ff; margin-bottom: 15px;">Zwierzęta na wyspie: Kosmos</h3>
+            <div class="animals-grid" id="kosmosList"></div>
+        </div>
+    </div>
+
+    <!-- Sekcja Detaliczna Zwierzaka -->
+    <div id="detale-zwierzaka" class="content-section">
+        <button class="back-btn" onclick="showSection('zwierzaki')">← Wróć do zwierzaków</button>
+        <h2 id="detal-nazwa">Nazwa Zwierzaka</h2>
+        <div class="detail-box">
+            <div id="detal-zdjecie-wrapper" class="image-container">
+                <!-- Tutaj wpadnie zdjęcie lub informacja o braku -->
+            </div>
+            <div class="detail-info">
+                <p><span>Domyślna nazwa:</span> <span id="detal-domyslna" style="color:#fff;"></span></p>
+                <p><span>Cena:</span> <span id="detal-cena" style="color:#28a745; font-weight:bold;"></span></p>
+                <p><span>Opis:</span> <span id="detal-opis" style="color:#ccc;"></span></p>
+                <p><span>Ulubiona rzecz:</span> <span id="detal-ulubiona" style="color:#ff00ff;"></span></p>
+                <p id="detal-jak-zdobyc-container" style="display:none;"><span>Jak zdobyć:</span> <span id="detal-jak-zdobyc" style="color:#ffcc00;"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Globalna zmienna dla liczby graczy
+        let currentPlayers = 1;
+
+        function updatePlayers(val) {
+            currentPlayers = parseInt(val);
+            document.getElementById("playersCount").textContent = currentPlayers;
+        }
+
+        // Baza danych prac
+        const jobDetails = {
+            "Dostarczanie galarety": {
+                nazwa: "Dostarczanie galarety",
+                opis: "1. Podążaj za markerem<br>2. Podnieś galaretkę<br>3. Wróć tutaj z galaretą",
+                osiagniecia: "Chwiejny początek",
+                pieniadzeBase: 10,
+                lokalizacja: "Dom Jelly Mana, Wyspa Mieszkalna",
+                czas: "6 minut",
+                stroj: "Strój galarety (kapelusz, góra)",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/f/f3/Jelly_Quest_Instructions.jpg/revision/latest/scale-to-width-down/1000?cb=20210321185841"
+            },
+            "Dostawa pizzy": {
+                nazwa: "Dostawa pizzy",
+                opis: "1. Weź pizzę<br>2. Transport Pizza<br>3. Dostarcz pizzę, zanim skończy się czas!!",
+                osiagniecia: "Szybkie cięcie",
+                pieniadzeBaseMin: 20,
+                pieniadzeBaseMax: 60,
+                lokalizacja: "Wobbly Pizza, City Island",
+                czas: "Zmieniający się czas",
+                stroj: "Strój do pizzy (kapelusz, bluzka, spodnie)",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/4/40/Pizzajob.jpg/revision/latest/scale-to-width-down/1000?cb=20200717154658"
+            },
+            "Zbieranie śmieci": {
+                nazwa: "Zbieranie śmieci",
+                opis: "1. Weź śmietnika i znajdź śmieci<br>2. Wrzuć śmieci na windę<br>3. Naciśnij przycisk na furgonetce",
+                osiagniecia: "Sprzątanie wyspy",
+                pieniadzeBase: 60,
+                lokalizacja: "Wysypisko, City Island",
+                czas: "5 minut",
+                stroj: "Śmieciowy strój (kapelusz, top)",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/f/fa/Trashjob.jpg/revision/latest/scale-to-width-down/1000?cb=20200718132005"
+            },
+            "Reagowanie kryzysowe": {
+                nazwa: "Reagowanie kryzysowe",
+                opis: "1. Wziąć karetkę i znaleźć pacjenta<br>2. Załaduj pacjenta<br>3. Transport pacjenta do szpitala",
+                osiagniecia: "Speedy Nee-Naw",
+                pieniadzeBaseText: "maksymalnie 80$",
+                pieniadzeBaseVal: 80,
+                lokalizacja: "Szpital, City Island",
+                czas: "Zmieniający się czas",
+                stroj: "Szpitalny strój (kapelusz, góra)",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/c/c5/Emergency_instructions.jpg/revision/latest/scale-to-width-down/1000?cb=20210325202246"
+            }
+        };
+
+        // Listy zawodów
+        const earthJobs = [
+            "Dostarczanie galarety", "Dostawa pizzy", "Zbieranie śmieci", "Reagowanie kryzysowe", 
+            "Chef", "Dostawa mebli", "Papierowa runda", "Usuwanie odpadów", "Oranie", 
+            "Seeding", "Harvesting", "Górnictwo", "Fire Fighter", "Cięcie drewna", 
+            "Science Machine", "Lodziarnia", "Taxi", "Ratownictwo powietrzne", 
+            "Disco", "Wędkarstwo", "Budowa", "Rozbiórka", "Recykling", "Artysta", 
+            "Badacz pogody"
+        ];
+
+        const spaceJobs = [
+            "Obrona przed asteroidami", "Obsługa bagażu", "Space Diner", 
+            "Wydobycie asteroid", "Ratownictwo kosmiczne", "Kosmiczny Kurier", 
+            "Space Disco", "Mechanik Kosmiczny"
+        ];
+
+        // Generowanie kafelków prac
+        function populateJobs() {
+            const earthContainer = document.getElementById("earthJobsList");
+            earthJobs.forEach(job => {
+                const card = document.createElement("div");
+                card.className = "job-card";
+                card.textContent = job;
+                
+                if (jobDetails[job]) {
+                    card.onclick = () => openJobDetails(job);
+                } else {
+                    card.onclick = () => alert("Poradnik do pracy: " + job + " pojawi się wkrótce!");
+                }
+                earthContainer.appendChild(card);
+            });
+
+            const spaceContainer = document.getElementById("spaceJobsList");
+            spaceJobs.forEach(job => {
+                const card = document.createElement("div");
+                card.className = "job-card";
+                card.textContent = job;
+                
+                if (jobDetails[job]) {
+                    card.onclick = () => openJobDetails(job);
+                } else {
+                    card.onclick = () => alert("Poradnik do pracy: " + job + " pojawi się wkrótce!");
+                }
+                spaceContainer.appendChild(card);
+            });
+        }
+        populateJobs();
+
+        // Otwieranie detali pracy
+        function openJobDetails(jobName) {
+            const data = jobDetails[jobName];
+            if (!data) return;
+
+            document.getElementById("praca-detal-nazwa").textContent = data.nazwa;
+            document.getElementById("praca-detal-opis").innerHTML = data.opis;
+            document.getElementById("praca-detal-osiagniecia").textContent = data.osiagniecia;
+            
+            // Logika zarobków w zależności od typu danych
+            let moneyText = "";
+            if (data.pieniadzeBaseMin !== undefined) {
+                const finalMin = data.pieniadzeBaseMin * currentPlayers;
+                const finalMax = data.pieniadzeBaseMax * currentPlayers;
+                moneyText = `${finalMin}-${finalMax} dolarów ($)`;
+            } else if (data.pieniadzeBaseVal !== undefined) {
+                const finalVal = data.pieniadzeBaseVal * currentPlayers;
+                moneyText = `maksymalnie ${finalVal}$`;
+            } else {
+                const finalMoney = data.pieniadzeBase * currentPlayers;
+                moneyText = `${finalMoney}$`;
+            }
+            document.getElementById("praca-detal-pieniadze").textContent = moneyText + " (" + currentPlayers + " gracz/graczy)";
+
+            document.getElementById("praca-detal-lokalizacja").textContent = data.lokalizacja;
+            document.getElementById("praca-detal-czas").textContent = data.czas;
+            document.getElementById("praca-detal-stroj").textContent = data.stroj;
+
+            const imageContainer = document.getElementById("praca-detal-zdjecie-wrapper");
+            if (!data.zdjecie || data.zdjecie === "Obraz niedostępny") {
+                imageContainer.innerHTML = "<span>Obraz niedostępny</span>";
+            } else {
+                imageContainer.innerHTML = `<img class="detail-image" src="${data.zdjecie}" alt="Zdjęcie pracy">`;
+            }
+
+            showSection('detale-pracy');
+        }
+
+        // Baza danych zwierzaków z pełnymi informacjami
+        const petDetails = {
+            "Pies": {
+                nazwa: "Pies",
+                domyslna: "Scruffy",
+                cena: "500$",
+                opis: "Przyjazne i godne zaufania, te psy zawsze będą cię wspierać. Chociaż mogą też polizać twoje plecy.",
+                ulubiona: "Głaskanie brzucha i dobry spacer.",
+                zdjecie: "https://wobblylife.wiki.gg/images/2025100413425900-07B23E7EA8184EA308B5F198A31AB7A0.jpg"
+            },
+            "Kot": {
+                nazwa: "Kot",
+                domyslna: "Patch",
+                cena: "500$",
+                opis: "Szybkie i zwinne koty na Wyspie Chwiejnej zawsze lądują na nogach. Te koty są figlarne i przyjemne w towarzystwie.",
+                ulubiona: "Gonienie za kłębkiem sznurka.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/0/01/2025100413425300-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125751"
+            },
+            "Ryby": {
+                nazwa: "Ryby",
+                domyslna: "Bubbles",
+                cena: "600$",
+                opis: "Każdy lubi Fish in a Bowl. Ten ma kółka, więc może towarzyszyć Ci w przygodach.",
+                ulubiona: "Spacery po plaży.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/9/9a/2025100413401700-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251004192532"
+            },
+            "Ryby tropikalne": {
+                nazwa: "Ryby tropikalne",
+                domyslna: "Tango",
+                cena: "600$",
+                opis: "Te ryby pochodzą z tropikalnej wyspy. Są one wyposażone w specjalną, podgrzewaną akwarium, co bardzo ich cieszy.",
+                ulubiona: "Odwiedzanie dżungli.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/1/1a/2025100413402100-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125751"
+            },
+            "Krab": {
+                nazwa: "Krab",
+                domyslna: "Pinchy",
+                cena: "750$",
+                opis: "Nie zniechęcaj się ich szczypcami, te kraby to prawdziwy śmiech i uwielbiają się bawić.",
+                ulubiona: "Chodzenie bokiem.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/c/c4/2025100413441400-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251004191739"
+            },
+            "Rozgwiazda": {
+                nazwa: "Rozgwiazda",
+                domyslna: "Humphrey",
+                cena: "750$",
+                opis: "Rozgwiazdy pochodzą z głębin pod wodą. To szczęśliwa grupa i robią wszystko z uśmiechem.",
+                ulubiona: "Robienie przewrotów.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/e/e3/2025100413442000-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125750"
+            },
+            "Pingwin": {
+                nazwa: "Pingwin",
+                domyslna: "Flipper",
+                cena: "750$",
+                opis: "Te pingwiny zpłynęły z bieguna północnego. Są bardzo zabawne i uwielbiają jeść ryby.",
+                ulubiona: "Ślizganie się po brzuchu.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/e/ed/2025100413450300-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125750"
+            },
+            "Pszczoła": {
+                nazwa: "Pszczoła",
+                domyslna: "Buzz",
+                cena: "750$",
+                opis: "Zawsze znajdziesz te przyjazne robaki kręcące się wokół. Uwielbiają znaleźć dobry ogród, w którym mogą się zaangażować.",
+                ulubiona: "Wpychanie twarzy w kwiaty.",
+                zdjecie: "Obraz niedostępny"
+            },
+            "Kurczak": {
+                nazwa: "Kurczak",
+                domyslna: "Chuck",
+                cena: "500$",
+                opis: "Może nie są najbystrzejszymi, ale te kury są godnymi zaufania i zabawnymi zwierzętami.",
+                ulubiona: "Siedzenie na jajkach.",
+                zdjecie: "Obraz niedostępny"
+            },
+            "Doktor Auge": {
+                nazwa: "Doktor Auge",
+                domyslna: "Doktor Auge",
+                cena: "1000$",
+                opis: "Występując w głębokich jaskiniach pod Wyspą Wobbly, te stworzenia są dość nieśmiałe i podekscytowane odkrywaniem świata zewnętrznego. Pochodzący z Arazhul Studios!",
+                ulubiona: "Owoce!",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/6/62/2025100413440600-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125751"
+            },
+            "Potwór": {
+                nazwa: "Potwór",
+                domyslna: "Sludge",
+                cena: "1200$",
+                opis: "Ten maluch uwielbia gryźć rzeczy i robić wszystko śliskim. Uwaga, są znane z tego, że są wybredne w jedzeniu.",
+                ulubiona: "Jego starszy brat.",
+                jakZdobyc: "Nakarm potwora w ramach zadania usuwania odpadów – łącznie 50 beczek z toksycznymi odpadami.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/4/41/2025100413481700-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125749"
+            },
+            "Duch": {
+                nazwa: "Duch",
+                domyslna: "Whisper",
+                cena: "1200$",
+                opis: "Te rzadkie stworzenia pierwotnie znaleziono w kopalni Wobbly. Lubią wyskakiwać i zaskakiwać ludzi.",
+                ulubiona: "Krzyk Boo.",
+                jakZdobyc: "Zbierz niebieską świecącą kulę z wnętrza zagadek Świątyni, wyjmując ją z powrotem, oraz zieloną świecącą kulę z zagadek Wodospadu. Zabierz obie do ukrytego tunelu w obrębie górniczej, by otworzyć tajną komnatę. W środku znajduje się nagrobek, który trzeba przetworzyć w maszynie, zanim skończy się timer. UWAGA: Kule mogą czasem losowo znikać.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/1/17/2025100413455400-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125750"
+            },
+            "Bogaty kurczak": {
+                nazwa: "Bogaty kurczak",
+                domyslna: "Hector",
+                cena: "1000$",
+                opis: "Ten kurczak znalazł swoje szczęście na farmie. Jest bardzo dobrze wychowany i uprzejmy.... no, jak na kurczaka.",
+                ulubiona: "Eleganckie imprezy.",
+                jakZdobyc: "Włóż worek z pieniędzmi do kurnika i pozwól go dziobać i zniszczyć.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/9/9d/2025100413473700-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125417"
+            },
+            "Ślimak": {
+                nazwa: "Ślimak",
+                domyslna: "Jerry",
+                cena: "600$",
+                opis: "Te ślimaki czują się jak u siebie wszędzie, zwłaszcza na parkiecie!",
+                ulubiona: "Breakdance",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/d/db/2025100413443600-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125750"
+            },
+            "Burgerowy pająk": {
+                nazwa: "Burgerowy pająk",
+                domyslna: "Patty",
+                cena: "1000$",
+                opis: "Co to w ogóle jest?!",
+                ulubiona: "Gonienie listonosza.",
+                jakZdobyc: "Włóż burgera z każdym składnikiem przez maszynę dwa razy podczas pracy szefa kuchni.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/9/94/2025100413443200-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125750"
+            },
+            "Papuga": {
+                nazwa: "Papuga",
+                domyslna: "Polly",
+                cena: "750$",
+                opis: "Te kolorowe ptaki lubią się ogrzewać na słońcu i dobrze kwakać.",
+                ulubiona: "Tęsknota za fiordami.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/d/dd/2025100413524400-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125749"
+            },
+            "Królik": {
+                nazwa: "Królik",
+                domyslna: "Flopsy",
+                cena: "500$",
+                opis: "Te futrzaste stworzenia świetnie się bawią, skacząc po okolicy. Niektórzy mówią, że ich duże, opadające uszy pozwalają im słyszeć w przyszłość.",
+                ulubiona: "Świeża, chrupiąca marchewka",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/c/c5/2025100413445500-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125750"
+            },
+            "Toppy": {
+                nazwa: "Toppy",
+                domyslna: "Toppy",
+                cena: "1000$",
+                opis: "Zuchwały cylinder z nogawkami.",
+                ulubiona: "Zabawianie publiczności.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/b/b5/2025100413435200-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125751"
+            },
+            "Lil C": {
+                nazwa: "Lil C",
+                domyslna: "Lil C",
+                cena: "750$",
+                opis: "Przyjazny, dobrze wyszkolony ninja.",
+                ulubiona: "Ochrona osób bezbronnych.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/4/49/2025100413435500-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251004192825"
+            },
+            "Dinozaur": {
+                nazwa: "Dinozaur",
+                domyslna: "Stumpy",
+                cena: "1000$",
+                opis: "Mały Wobblysaurus. Te małe stworzenia mogą wyglądać strasznie, ale tak naprawdę łatwo się przestraszyć!",
+                ulubiona: "Potapane w kółko.",
+                jakZdobyc: "Uzupełnij kolekcję skamieniałości.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/a/a5/2025100413474500-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125749"
+            },
+            "Wąż": {
+                nazwa: "Wąż",
+                domyslna: "Slithers",
+                cena: "650$",
+                opis: "Te węże świetnie nadają się do zwierząt. Mimo że nie mają nóg, są szybkimi!",
+                ulubiona: "Konkurs taneczny.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/b/b8/2025100413445000-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125750"
+            },
+            "Piłka golfowa": {
+                nazwa: "Piłka golfowa",
+                domyslna: "Putty",
+                cena: "1000$",
+                opis: "Te charyzmatyczne złote kule są po prostu niesamowite. Są najszczęśliwsze, gdy turlają się po trawiastych zboczach!",
+                ulubiona: "Zdobycie hole in one.",
+                jakZdobyc: "Wejście na ostatni dołek na polu golfowym.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/a/ae/2025100413470400-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125104"
+            },
+            "Żaba": {
+                nazwa: "Żaba",
+                domyslna: "Hopper",
+                cena: "500$",
+                opis: "Te stworzenia mają długie języki i lubią skakać w deszczu.",
+                ulubiona: "Relaks w ich mieszkaniu.",
+                jakZdobyc: "Znajdź trzy posągi:\n- Na jednej z turbin na morzu poniżej Farm Island na mapie\n- Obok jednego z filarów kolejki górskiej\n- Obok ogromnego, chwiejnego posągu na Wyspie Dżungli",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/1/10/2025100413461600-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125751"
+            },
+            "Gemmy": {
+                nazwa: "Gemmy",
+                domyslna: "Gemmy",
+                cena: "750$",
+                opis: "Gemmy uwielbiają pokazywać swoje kryształy. Zawsze dbają o czystość i błyszczącość!",
+                ulubiona: "Bycie pod ziemią.",
+                jakZdobyc: "Uzupełnij kolekcję jaskiń w muzeum.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/7/7e/2025100413521700-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005124857"
+            },
+            "Gnom": {
+                nazwa: "Gnom",
+                domyslna: "Nosey",
+                cena: "750$",
+                opis: "Te krasnale są niezawodnymi zwierzętami domowymi. Chociaż znane są z tego, że robią sobie psikusy z właścicieli!",
+                ulubiona: "Dobry sen.",
+                jakZdobyc: "Na Farm Island znajduje się szklarnia w pobliżu stodoły. Przed domem stoi krasnal. Wchodź w interakcję z gnomem, aby odblokować gnoma.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/9/95/2025100413522300-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125749"
+            },
+            "Jeż": {
+                nazwa: "Jeż",
+                domyslna: "Spike",
+                cena: "500$",
+                opis: "Te nieśmiałe stworzenia rzadko widuje się na wolności. Są świetnymi zwierzętami domowymi, tylko uważaj na ich kolce!",
+                ulubiona: "Tarzanie się w kulkę.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/8/85/2025100413504600-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125750"
+            },
+            "Outletowy potwór": {
+                nazwa: "Outletowy potwór",
+                domyslna: "Spark",
+                cena: "1000$",
+                opis: "Te dziwaczne zwierzęta są stworzone z czystej elektryczności. Tylko uważaj, żeby ich nie przeciążyć!",
+                ulubiona: "Twarde, kwaśne magnesy!",
+                jakZdobyc: "Zlokalizowany w budynku przy pracy w elektrowni. Znajdź trzy gniazdka rozrzucone w budynku. Zanieś te wtyczki na drugie piętro, gdzie znajduje się potwór gniazdka. Podłącz gniazdka do gniazdek w ścianie. Gdy masz wszystkie trzy wtyczki gniazdek, naciśnij przycisk po lewej. Wchodź w interakcję z potworem outletu po rozbiciu szkła.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/5/5b/2025100413554400-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125750"
+            },
+            "Wielki kot": {
+                nazwa: "Wielki kot",
+                domyslna: "Fluffy",
+                cena: "500$",
+                opis: "Te koty uwielbiają się leniuchować. Często można je znaleźć leżące na plecach na słońcu.",
+                ulubiona: "Pełna miska kociej karmy.",
+                jakZdobyc: "Ukończ Misję Detektywistyczną 3",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/3/37/2025100413553600-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125749"
+            },
+            "Robotyczny lokaj": {
+                nazwa: "Robotyczny lokaj",
+                domyslna: "Jeeves",
+                cena: "500c",
+                opis: "Ci mali roboczcy przyjaciele są bardzo pomocni i uwielbiają organizować imprezy. Ten został zrobiony dla ciebie przez wynalazcę Wobbly.",
+                ulubiona: "Uzyskanie idealnego połysku na eleganckim kieliszku do wina.",
+                jakZdobyc: "Ukończ misję mojego własnego robota lokaja",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/f/f4/2025092618205200-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125749"
+            },
+            "Chomper bot": {
+                nazwa: "Chomper bot",
+                domyslna: "Chonker",
+                cena: "500c",
+                opis: "Te Chomper Boty to fantastyczne zwierzęta domowe. Zjedzą wszystko, nawet twoje śmieci.",
+                ulubiona: "Gonienie za własną anteną.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/9/97/2025092618364000-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125749"
+            },
+            "Mecha pirania": {
+                nazwa: "Mecha pirania",
+                domyslna: "Mecha Piranha",
+                cena: "750c",
+                opis: "Te robotyczne ryby są znane z lekkiego temperamentu, więc staraj się nie wchodzić w złą stronę.",
+                ulubiona: "Gryzenie rzeczy.",
+                jakZdobyc: "Ukończ zadanie Wędkarz Asteroid.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/d/d1/2025092618203800-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125746"
+            },
+            "Asteroidowy robak": {
+                nazwa: "Asteroidowy robak",
+                domyslna: "Gurgle",
+                cena: "1250c",
+                opis: "Te robaki znaleziono wewnątrz Górniczej Asteroidy. Powodują niekończące się spustosy wśród górników.",
+                ulubiona: "Uderzanie Wobbly jego maśi.",
+                jakZdobyc: "Ukończ zadanie Polowanie na jajka.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/3/35/2025100413334400-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125751"
+            },
+            "Tajemniczy kryształ": {
+                nazwa: "Tajemniczy kryształ",
+                domyslna: "Unknow Crystal",
+                cena: "1000c",
+                opis: "Dziwne kryształowe stworzenie roślinne znalezione głęboko w kosmosie. Niewiele o tym wiadomo, ale jak dotąd wydaje się przyjazny.",
+                ulubiona: "Nikt nie wie.",
+                jakZdobyc: "W czarnej dziurze, gdy docierasz do części z białymi świecącymi kryształami, idź na skrajną prawą ścieżkę, gdzie powinna być dziura przypominająca okno w ścianie. Na końcu będą trzy kryształy, które trzeba trafić, w kolejności: Prawo, Lewo, Środek, Lewo, Prawo. Następnie się rozbijają i odsłaniają tor przeszkód, na którym znajduje się prezent, który również daje zwierzę.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/9/98/2025100413332900-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125751"
+            },
+            "Copter bot": {
+                nazwa: "Copter bot",
+                domyslna: "Copter Bot",
+                cena: "750c",
+                opis: "Mały, szybko latający robot zdolny do przenoszenia małych ładunków. Choć mogą mieć problemy z wypadkami, nadrabiają to entuzjazmem.",
+                ulubiona: "Poznawanie nowych Wobbly's.",
+                jakZdobyc: "Podczas misji Disquiingly Alarming są drzwi wymagające karty dostępu, w pokoju z botami Positivity i Worker. W pokoju, który ma wentylację prowadzącą z powrotem do głównej części, jest karta dostępu. Zabierz kartę dostępu do drzwi i otwórz drzwi. Wejdź w interakcję ze zwierzakiem, aby go odblokować.",
+                zdjecie: "https://static.wikia.nocookie.net/wobbly-life/images/1/19/2025092618202000-07B23E7EA8184EA308B5F198A31AB7A0.jpg/revision/latest/scale-to-width-down/1000?cb=20251005125248"
+            }
+        };
+
+        // Listy zwierzaków dla wszystkich wysp
+        const farmaAnimals = [
+            "Pies", "Kot", "Ryby", "Ryby tropikalne", "Krab", "Rozgwiazda", 
+            "Pingwin", "Pszczoła", "Kurczak", "Doktor Auge", "Potwór", "Duch", 
+            "Bogaty kurczak", "Ślimak", "Burgerowy pająk", "Papuga", "Królik", 
+            "Toppy", "Lil C", "Dinozaur", "Wąż", "Piłka golfowa", "Żaba"
+        ];
+
+        const rajskaAnimals = [
+            "Pies", "Ryby", "Ryby tropikalne", "Papuga", "Królik", 
+            "Wąż", "Gemmy", "Gnom", "Jeż", "Outletowy potwór", "Wielki kot"
+        ];
+
+        const kosmosAnimals = [
+            "Robotyczny lokaj", "Chomper bot", "Mecha pirania", 
+            "Asteroidowy robak", "Tajemniczy kryształ", "Copter bot"
+        ];
+
+        // Funkcja do generowania kart zwierzaków
+        function populateGrid(containerId, data) {
+            const grid = document.getElementById(containerId);
+            grid.innerHTML = "";
+            data.forEach(animal => {
+                const card = document.createElement("div");
+                card.className = "animal-card";
+                card.textContent = animal;
+                
+                if (petDetails[animal]) {
+                    card.onclick = () => openPetDetails(animal);
+                } else {
+                    card.onclick = () => alert("Szczegóły dla zwierzaka: " + animal + " pojawią się wkrótce!");
+                }
+                
+                grid.appendChild(card);
+            });
+        }
+
+        populateGrid("farmaList", farmaAnimals);
+        populateGrid("rajskaList", rajskaAnimals);
+        populateGrid("kosmosList", kosmosAnimals);
+
+        // Funkcja otwierająca widok szczegółów zwierzaka
+        function openPetDetails(animalName) {
+            const data = petDetails[animalName];
+            if (!data) return;
+
+            document.getElementById("detal-nazwa").textContent = data.nazwa;
+            document.getElementById("detal-domyslna").textContent = data.domyslna;
+            document.getElementById("detal-cena").textContent = data.cena;
+            document.getElementById("detal-opis").textContent = data.opis;
+            document.getElementById("detal-ulubiona").textContent = data.ulubiona;
+
+            const jakZdobycContainer = document.getElementById("detal-jak-zdobyc-container");
+            const jakZdobycSpan = document.getElementById("detal-jak-zdobyc");
+            if (data.jakZdobyc) {
+                jakZdobycSpan.innerHTML = data.jakZdobyc.replace(/\n/g, '<br>');
+                jakZdobycContainer.style.display = "block";
+            } else {
+                jakZdobycContainer.style.display = "none";
+            }
+
+            const imageContainer = document.getElementById("detal-zdjecie-wrapper");
+            if (data.zdjecie === "Obraz niedostępny") {
+                imageContainer.innerHTML = "<span>Obraz niedostępny</span>";
+            } else {
+                imageContainer.innerHTML = `<img class="detail-image" src="${data.zdjecie}" alt="Zdjęcie zwierzaka">`;
+            }
+
+            showSection('detale-zwierzaka');
+        }
+
+        // Funkcja przełączania głównych zakładek
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            
+            document.getElementById(sectionId).classList.add('active');
+
+            document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+            if(sectionId === 'zwierzaki' || sectionId === 'detale-zwierzaka') {
+                document.getElementById('tab-zwierzaki').classList.add('active');
+            } else if(sectionId === 'prace' || sectionId === 'detale-pracy') {
+                document.getElementById('tab-prace').classList.add('active');
+            }
+        }
+
+        // Funkcja przełączania wysp
+        function showIsland(islandId) {
+            document.querySelectorAll('.animals-container').forEach(cont => {
+                cont.classList.remove('active');
+            });
+            document.getElementById(islandId).classList.add('active');
+
+            document.querySelectorAll('.island-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('btn-' + islandId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
